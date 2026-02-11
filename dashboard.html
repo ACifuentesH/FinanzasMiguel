@@ -1735,6 +1735,25 @@
       }, 3000);
     }
 
+    function showConfigModal() {
+      const modal = document.getElementById('config-modal');
+      if (!modal) return;
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      if (typeof updateFileStatus === 'function') updateFileStatus();
+      const syncMsg = document.getElementById('sync-active-msg');
+      if (syncMsg) syncMsg.classList.toggle('hidden', !localStorage.getItem('miguelini_sheet_url'));
+      refreshPaymentMethodSelect('payment-method');
+      renderTemplates();
+    }
+
+    function hideConfigModal() {
+      const modal = document.getElementById('config-modal');
+      if (!modal) return;
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
     document.getElementById('add-income-btn').addEventListener('click', () => showModal('income', false));
     document.getElementById('add-expense-btn').addEventListener('click', () => showModal('expense', false));
     document.getElementById('add-debt-btn').addEventListener('click', () => showModal('debt', false));
