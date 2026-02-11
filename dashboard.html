@@ -2010,13 +2010,14 @@
       window._sheetSyncUrl = url;
       var sb = document.getElementById('sheet-sync-badge'); if (sb) { sb.classList.remove('hidden'); sb.classList.add('flex'); }
       setSheetStatus('Trayendo...', false);
-      fetch(url).then(function(r) { return r.json(); }).then(function(arr) {
+      var fetchFn = window._fetchSheetJsonp || function(u) { return fetch(u).then(function(r) { return r.json(); }); };
+      fetchFn(url).then(function(arr) {
         if (!Array.isArray(arr)) { setSheetStatus('El Sheet no devolvió un array. Revisa el script.', true); return; }
         localStorage.setItem('miguelini_data', JSON.stringify(arr));
         setSheetStatus('Datos cargados. Recargando...', false);
         setTimeout(function() { location.reload(); }, 800);
       }).catch(function(err) {
-        setSheetStatus('Error al traer (CORS o URL). Prueba con la extensión CORS o importa el JSON manual.', true);
+        setSheetStatus('Error al traer. Comprueba la URL del Web App.', true);
       });
     });
     document.getElementById('export-csv-btn').addEventListener('click', function() {
@@ -2325,12 +2326,30 @@
       if (sheetUrl) localStorage.setItem('miguelini_sheet_url', sheetUrl);
       window._sheetSyncUrl = sheetUrl || null;
 
+      window._fetchSheetJsonp = function(url) {
+        return new Promise(function(resolve, reject) {
+          var sep = url.indexOf('?') >= 0 ? '&' : '?';
+          var cbName = '__sheetJsonpCb';
+          var script = document.createElement('script');
+          window[cbName] = function(data) {
+            try { delete window[cbName]; } catch (e) {}
+            if (script.parentNode) script.parentNode.removeChild(script);
+            resolve(Array.isArray(data) ? data : (data && data.data && Array.isArray(data.data) ? data.data : []));
+          };
+          script.src = url + sep + 'callback=' + cbName;
+          script.onerror = function() {
+            try { delete window[cbName]; } catch (e) {}
+            if (script.parentNode) script.parentNode.removeChild(script);
+            reject(new Error('Error de red'));
+          };
+          document.head.appendChild(script);
+        });
+      };
+
       if (window._sheetSyncUrl) {
         try {
-          var r = await fetch(window._sheetSyncUrl);
-          var data = await r.json();
-          var arr = Array.isArray(data) ? data : (data && data.data && Array.isArray(data.data) ? data.data : null);
-          if (arr && arr.length >= 0) {
+          var arr = await window._fetchSheetJsonp(window._sheetSyncUrl);
+          if (Array.isArray(arr)) {
             localStorage.setItem('miguelini_data', JSON.stringify(arr));
           }
         } catch (e) { console.warn('No se pudo cargar desde Google Sheet', e); }
