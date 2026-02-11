@@ -89,7 +89,11 @@
        <div id="bcv-rate-display" class="bg-white border border-gray-200 px-4 py-2 rounded-lg">
         <p class="text-gray-500 text-xs mb-0.5">Dólar BCV</p>
         <p id="bcv-rate-value" class="text-gray-900 font-semibold text-sm">Cargando...</p>
-       </div><button id="config-btn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium px-4 py-2 rounded-lg transition-colors text-sm whitespace-nowrap"> Configuración </button>
+       </div>
+       <div id="sheet-sync-badge" class="hidden items-center gap-1.5 bg-green-50 border border-green-200 px-3 py-1.5 rounded-lg" title="Los datos se cargan y guardan en Google Sheet. Visibles en todos los dispositivos.">
+        <span class="text-green-700 text-xs font-medium">Sincronizado con Sheet</span>
+       </div>
+       <button id="config-btn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium px-4 py-2 rounded-lg transition-colors text-sm whitespace-nowrap"> Configuración </button>
        <div class="flex items-center gap-2"><button id="prev-month-btn" class="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 p-3 rounded-lg transition-colors flex-shrink-0">
          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
          </svg></button>
@@ -1964,6 +1968,8 @@
       var v = (this.value || '').trim();
       localStorage.setItem('miguelini_sheet_url', v);
       window._sheetSyncUrl = v || null;
+      var sb = document.getElementById('sheet-sync-badge');
+      if (sb) { if (v) { sb.classList.remove('hidden'); sb.classList.add('flex'); } else { sb.classList.add('hidden'); sb.classList.remove('flex'); } }
     });
     function setSheetStatus(msg, isError) {
       sheetStatus.textContent = msg;
@@ -1975,6 +1981,7 @@
       if (!url) { setSheetStatus('Escribe la URL del Web App de Google.', true); return; }
       localStorage.setItem('miguelini_sheet_url', url);
       window._sheetSyncUrl = url;
+      var sb = document.getElementById('sheet-sync-badge'); if (sb) { sb.classList.remove('hidden'); sb.classList.add('flex'); }
       var data = localStorage.getItem('miguelini_data') || '[]';
       setSheetStatus('Enviando...', false);
       fetch(url, { method: 'POST', body: data, headers: { 'Content-Type': 'application/json' } })
@@ -2000,6 +2007,7 @@
       if (!url) { setSheetStatus('Escribe la URL del Web App.', true); return; }
       localStorage.setItem('miguelini_sheet_url', url);
       window._sheetSyncUrl = url;
+      var sb = document.getElementById('sheet-sync-badge'); if (sb) { sb.classList.remove('hidden'); sb.classList.add('flex'); }
       setSheetStatus('Trayendo...', false);
       fetch(url).then(function(r) { return r.json(); }).then(function(arr) {
         if (!Array.isArray(arr)) { setSheetStatus('El Sheet no devolvió un array. Revisa el script.', true); return; }
@@ -2314,20 +2322,23 @@
       var hash = (window.location.hash || '').replace(/^#/, '');
       if (params.get('sheet')) { sheetUrl = params.get('sheet'); localStorage.setItem('miguelini_sheet_url', sheetUrl); if (history.replaceState) history.replaceState(null, '', window.location.pathname + (window.location.hash || '')); }
       if (hash.indexOf('sheet=') === 0) { sheetUrl = decodeURIComponent(hash.slice(6).split('&')[0]); localStorage.setItem('miguelini_sheet_url', sheetUrl); if (history.replaceState) history.replaceState(null, '', window.location.pathname); }
-      window._sheetSyncUrl = sheetUrl || null;
-      if (sheetUrl) {
+      window._sheetSyncUrl = sheetUrl ? sheetUrl.trim() : null;
+
+      if (window._sheetSyncUrl) {
         try {
-          var r = await fetch(sheetUrl);
-          var arr = await r.json();
-          if (Array.isArray(arr)) {
+          var r = await fetch(window._sheetSyncUrl);
+          var data = await r.json();
+          var arr = Array.isArray(data) ? data : (data && data.data && Array.isArray(data.data) ? data.data : null);
+          if (arr && arr.length >= 0) {
             localStorage.setItem('miguelini_data', JSON.stringify(arr));
           }
         } catch (e) { console.warn('No se pudo cargar desde Google Sheet', e); }
       }
+
       window._persistToSheet = function() {
         if (!window._sheetSyncUrl) return;
-        var raw = localStorage.getItem('miguelini_data') || '[]';
-        fetch(window._sheetSyncUrl, { method: 'POST', body: raw, headers: { 'Content-Type': 'application/json' } }).catch(function() {});
+        var payload = (window.dataSdk && window.dataSdk._store) ? JSON.stringify(window.dataSdk._store) : (localStorage.getItem('miguelini_data') || '[]');
+        fetch(window._sheetSyncUrl, { method: 'POST', body: payload, headers: { 'Content-Type': 'application/json' } }).catch(function(err) { console.warn('Error al guardar en Sheet', err); });
       };
       if (window.elementSdk) {
         window.elementSdk.init({
@@ -2406,6 +2417,12 @@
       }
       
       await checkAndProcessScheduledTransactions();
+
+      var sheetBadge = document.getElementById('sheet-sync-badge');
+      if (sheetBadge && window._sheetSyncUrl) {
+        sheetBadge.classList.remove('hidden');
+        sheetBadge.classList.add('flex');
+      }
     }
 
     init();
