@@ -89,8 +89,7 @@
        <div id="bcv-rate-display" class="bg-white border border-gray-200 px-4 py-2 rounded-lg">
         <p class="text-gray-500 text-xs mb-0.5">Dólar BCV</p>
         <p id="bcv-rate-value" class="text-gray-900 font-semibold text-sm">Cargando...</p>
-       </div><button id="templates-btn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium px-4 py-2 rounded-lg transition-colors text-sm whitespace-nowrap"> Programadas </button>
-       <button id="data-import-export-btn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium px-4 py-2 rounded-lg transition-colors text-sm whitespace-nowrap" title="Exportar / Importar datos"> Datos </button>
+       </div><button id="config-btn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium px-4 py-2 rounded-lg transition-colors text-sm whitespace-nowrap"> Configuración </button>
        <div class="flex items-center gap-2"><button id="prev-month-btn" class="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 p-3 rounded-lg transition-colors flex-shrink-0">
          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
          </svg></button>
@@ -175,73 +174,63 @@
       <p class="text-gray-400" style="font-size: 15px;">No hay transacciones</p>
       <p class="text-gray-400 mt-1 text-sm">Agrega ingresos, gastos o deudas</p>
      </div>
-    </div><!-- Templates Modal -->
-    <div id="templates-modal" class="fixed inset-0 bg-black bg-opacity-40 hidden items-center justify-center p-4" style="z-index: 1000;">
-     <div class="bg-white rounded-lg shadow-xl w-full max-w-3xl fade-in" style="max-height: 90%;">
-      <div class="p-6 border-b border-gray-200 flex justify-between items-center">
-       <div>
-        <h3 class="font-semibold text-gray-900 mb-1" style="font-size: 20px;">Transacciones Programadas</h3>
-        <p class="text-gray-500 text-sm">Configura tus ingresos y gastos recurrentes</p>
-       </div><button id="close-templates-btn" class="text-gray-400 hover:text-gray-900 transition-colors">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-        </svg></button>
-      </div>
-      <div class="p-6 overflow-y-auto" style="max-height: calc(90vh - 200px);">
-       <div class="mb-6"><button id="add-template-btn" class="bg-gray-800 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm"> + Nueva transacción programada </button>
-       </div>
-       <div id="templates-list" class="space-y-3"><!-- Templates aparecerán aquí -->
-       </div>
-       <div id="templates-empty" class="text-center py-12">
-        <p class="text-gray-400 text-sm">No hay transacciones programadas</p>
-        <p class="text-gray-500 text-xs mt-1">Crea plantillas para generar automáticamente tus ingresos y gastos mensuales</p>
-       </div>
-      </div>
-     </div>
-    </div><!-- Datos: Exportar / Importar (ej. desde Canva) -->
-    <div id="data-modal" class="fixed inset-0 bg-black bg-opacity-40 hidden items-center justify-center p-4" style="z-index: 1002;">
-     <div class="bg-white rounded-lg shadow-xl w-full max-w-lg fade-in max-h-[90vh] overflow-y-auto">
-      <div class="p-6 border-b border-gray-200 flex justify-between items-center">
-       <h3 class="font-semibold text-gray-900" style="font-size: 18px;">Exportar / Importar datos</h3>
-       <button type="button" id="close-data-modal-btn" class="text-gray-400 hover:text-gray-900 transition-colors">
+    </div><!-- Configuración (métodos de pago, datos, programadas) -->
+    <div id="config-modal" class="fixed inset-0 bg-black bg-opacity-40 hidden items-center justify-center p-4" style="z-index: 1002;">
+     <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl fade-in max-h-[90vh] overflow-hidden flex flex-col">
+      <div class="p-4 border-b border-gray-200 flex justify-between items-center flex-shrink-0">
+       <h2 class="font-semibold text-gray-900" style="font-size: 20px;">Configuración</h2>
+       <button type="button" id="close-config-btn" class="text-gray-400 hover:text-gray-900 transition-colors p-1">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
        </button>
       </div>
-      <div class="p-6 space-y-6">
-       <div class="pb-4 border-b border-gray-200">
-        <p class="text-gray-700 text-sm font-medium mb-2">Guardar en archivo (no volátil, en tu PC)</p>
-        <p class="text-gray-500 text-xs mb-2">Abre un archivo .json o guarda como nuevo. A partir de ahí cada cambio se guardará en ese archivo. Usa el mismo archivo cada vez para tener todo en un solo sitio. (Chrome/Edge.)</p>
-        <div class="flex flex-wrap gap-2 mb-2">
-         <button type="button" id="open-file-btn" class="bg-emerald-700 hover:bg-emerald-600 text-white font-medium py-2 px-4 rounded-lg text-sm">Abrir archivo de datos</button>
-         <button type="button" id="save-file-btn" class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2 px-4 rounded-lg text-sm">Guardar como archivo nuevo</button>
-         <button type="button" id="save-csv-file-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg text-sm">Guardar CSV en archivo</button>
+      <div class="p-4 overflow-y-auto flex-1 space-y-6">
+       <!-- 1. Métodos de pago -->
+       <div>
+        <h3 class="font-medium text-gray-900 mb-2" style="font-size: 16px;">Métodos de pago</h3>
+        <p class="text-gray-500 text-xs mb-2">Agrega métodos para usarlos al registrar ingresos o gastos.</p>
+        <div class="flex gap-2">
+         <input type="text" id="new-payment-method-input" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Ej: PayPal, Pago móvil">
+         <button type="button" id="add-payment-method-btn" class="bg-gray-800 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-lg text-sm whitespace-nowrap">Agregar</button>
         </div>
-        <p id="file-status" class="text-sm text-gray-600"></p>
        </div>
-       <div>
-        <p class="text-gray-700 text-sm font-medium mb-2">Exportar (backup o pasar a otro navegador)</p>
-        <button type="button" id="export-data-btn" class="bg-gray-800 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-lg text-sm">Descargar JSON</button>
-        <button type="button" id="copy-data-btn" class="ml-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg text-sm">Copiar al portapapeles</button>
-       </div>
-       <div>
-        <p class="text-gray-700 text-sm font-medium mb-2">Importar datos (por ejemplo desde Canva Sites)</p>
-        <p class="text-gray-500 text-xs mb-2">En Canva: abre tu sitio → F12 → Application → Local storage → <strong>finanzaspersonales.my.canva.site</strong> (o el origen que use tu app). Busca la clave donde estén las transacciones, copia el <strong>Valor</strong> y pégalo abajo.</p>
-        <textarea id="import-json-input" rows="6" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono" placeholder='Pega aquí el JSON (array [...] o objeto con los datos)'></textarea>
-        <div class="flex gap-2 mt-2">
+       <!-- 2. Datos -->
+       <div class="border-t border-gray-200 pt-4">
+        <h3 class="font-medium text-gray-900 mb-2" style="font-size: 16px;">Datos</h3>
+        <p class="text-gray-500 text-xs mb-3">Exportar, importar o guardar en archivo / Google Sheet.</p>
+        <div class="space-y-3">
+         <div class="flex flex-wrap gap-2">
+          <button type="button" id="open-file-btn" class="bg-emerald-700 hover:bg-emerald-600 text-white font-medium py-2 px-3 rounded-lg text-sm">Abrir archivo</button>
+          <button type="button" id="save-file-btn" class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2 px-3 rounded-lg text-sm">Guardar como archivo</button>
+          <button type="button" id="export-data-btn" class="bg-gray-700 hover:bg-gray-600 text-white font-medium py-2 px-3 rounded-lg text-sm">Descargar JSON</button>
+          <button type="button" id="copy-data-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-3 rounded-lg text-sm">Copiar</button>
+          <button type="button" id="export-csv-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-3 rounded-lg text-sm">Descargar CSV</button>
+          <button type="button" id="save-csv-file-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-3 rounded-lg text-sm">Guardar CSV en archivo</button>
+         </div>
+         <textarea id="import-json-input" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono" placeholder='Pega JSON para importar'></textarea>
          <button type="button" id="import-data-btn" class="bg-gray-800 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-lg text-sm">Importar y recargar</button>
+         <p id="file-status" class="text-sm text-gray-600"></p>
+         <div class="pt-2 border-t border-gray-100">
+          <p class="text-gray-600 text-xs font-medium mb-1">Google Sheet</p>
+          <input type="url" id="google-sheet-url" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm mb-1" placeholder="https://script.google.com/macros/s/.../exec">
+          <p id="sync-active-msg" class="text-xs text-green-600 mb-1 hidden">✓ Sincronización activa.</p>
+          <div class="flex flex-wrap gap-2">
+           <button type="button" id="send-to-sheet-btn" class="bg-green-700 hover:bg-green-600 text-white font-medium py-2 px-3 rounded-lg text-sm">Enviar al Sheet</button>
+           <button type="button" id="fetch-from-sheet-btn" class="bg-green-600 hover:bg-green-500 text-white font-medium py-2 px-3 rounded-lg text-sm">Traer del Sheet</button>
+           <button type="button" id="copy-mobile-link-btn" class="text-sm text-gray-600 hover:text-gray-900 underline">Enlace para móvil</button>
+          </div>
+          <p id="sheet-status" class="text-sm mt-1 hidden"></p>
+         </div>
         </div>
        </div>
-       <div class="border-t border-gray-200 pt-6">
-        <p class="text-gray-700 text-sm font-medium mb-2">Conectar con Google Sheet</p>
-        <p class="text-gray-500 text-xs mb-2">1) En Google Sheet: Extensiones → Apps Script. Pega el código del archivo <strong>GoogleSheet-AppScript.js</strong>. 2) Despliega como «Aplicación web»: Ejecutar como «Yo», Quién puede acceder «Cualquier persona». 3) Copia la URL y pégala abajo. <strong>Con la URL configurada, los datos se sincronizan en todos los dispositivos</strong> (móvil, tablet, PC).</p>
-        <input type="url" id="google-sheet-url" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm mb-2" placeholder="https://script.google.com/macros/s/.../exec">
-        <p id="sync-active-msg" class="text-xs text-green-600 mb-2 hidden">✓ Sincronización activa: los cambios se guardan en el Sheet.</p>
-        <button type="button" id="copy-mobile-link-btn" class="text-sm text-gray-600 hover:text-gray-900 underline mb-2">Copiar enlace para abrir en el móvil (con esta URL)</button>
-        <div class="flex flex-wrap gap-2">
-         <button type="button" id="send-to-sheet-btn" class="bg-green-700 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-lg text-sm">Enviar datos al Sheet</button>
-         <button type="button" id="fetch-from-sheet-btn" class="bg-green-600 hover:bg-green-500 text-white font-medium py-2 px-4 rounded-lg text-sm">Traer datos del Sheet</button>
-         <button type="button" id="export-csv-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg text-sm">Descargar CSV (para pegar en Sheet)</button>
+       <!-- 3. Transacciones programadas -->
+       <div class="border-t border-gray-200 pt-4">
+        <h3 class="font-medium text-gray-900 mb-2" style="font-size: 16px;">Transacciones programadas</h3>
+        <p class="text-gray-500 text-xs mb-3">Ingresos y gastos recurrentes que se generan automáticamente.</p>
+        <button type="button" id="add-template-btn" class="bg-gray-800 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-lg text-sm mb-3">+ Nueva transacción programada</button>
+        <div id="templates-list" class="space-y-2"></div>
+        <div id="templates-empty" class="text-center py-6">
+         <p class="text-gray-400 text-sm">No hay transacciones programadas</p>
         </div>
-        <p id="sheet-status" class="text-sm mt-2 hidden"></p>
        </div>
       </div>
      </div>
@@ -278,12 +267,8 @@
        </div>
        <div id="payment-method-field" class="hidden">
         <label class="block text-gray-700 text-sm font-medium mb-2">Método de pago</label>
-        <div class="flex gap-2 mb-2">
-         <select id="payment-method" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent text-sm"></select>
-         <input type="text" id="new-payment-method-input" class="w-32 px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Nuevo método">
-         <button type="button" id="add-payment-method-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-3 rounded-lg text-sm whitespace-nowrap">Agregar</button>
-        </div>
-        <div id="split-payment-toggle" class="mb-2 hidden">
+        <select id="payment-method" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent text-sm"></select>
+        <div id="split-payment-toggle" class="mb-2 mt-2 hidden">
          <label class="inline-flex items-center gap-2 cursor-pointer">
           <input type="checkbox" id="split-payment-checkbox" class="rounded border-gray-300">
           <span class="text-sm text-gray-700">Dividir pago entre varios métodos</span>
@@ -1530,7 +1515,6 @@
       document.getElementById('split-payment-checkbox').checked = false;
       document.getElementById('payment-splits-container').classList.add('hidden');
       document.getElementById('payment-splits-list').innerHTML = '';
-      document.getElementById('new-payment-method-input').value = '';
       refreshPaymentMethodSelect('payment-method');
       
       // Set default date to today
@@ -1726,18 +1710,6 @@
       modal.classList.remove('flex');
     }
 
-    function showTemplatesModal() {
-      const modal = document.getElementById('templates-modal');
-      modal.classList.remove('hidden');
-      modal.classList.add('flex');
-    }
-
-    function hideTemplatesModal() {
-      const modal = document.getElementById('templates-modal');
-      modal.classList.add('hidden');
-      modal.classList.remove('flex');
-    }
-
     function showLoading() {
       document.getElementById('loading').classList.remove('hidden');
     }
@@ -1767,8 +1739,8 @@
     document.getElementById('add-expense-btn').addEventListener('click', () => showModal('expense', false));
     document.getElementById('add-debt-btn').addEventListener('click', () => showModal('debt', false));
     document.getElementById('cancel-btn').addEventListener('click', hideModal);
-    document.getElementById('templates-btn').addEventListener('click', showTemplatesModal);
-    document.getElementById('close-templates-btn').addEventListener('click', hideTemplatesModal);
+    document.getElementById('config-btn').addEventListener('click', showConfigModal);
+    document.getElementById('close-config-btn').addEventListener('click', hideConfigModal);
 
     document.getElementById('add-payment-method-btn').addEventListener('click', function() {
       const input = document.getElementById('new-payment-method-input');
@@ -1847,20 +1819,6 @@
       return splits;
     }
 
-    function showDataModal() {
-      document.getElementById('data-modal').classList.remove('hidden');
-      document.getElementById('data-modal').classList.add('flex');
-      document.getElementById('import-json-input').value = '';
-      var syncMsg = document.getElementById('sync-active-msg');
-      if (syncMsg) syncMsg.classList.toggle('hidden', !localStorage.getItem('miguelini_sheet_url'));
-      if (typeof updateFileStatus === 'function') updateFileStatus();
-    }
-    function hideDataModal() {
-      document.getElementById('data-modal').classList.add('hidden');
-      document.getElementById('data-modal').classList.remove('flex');
-    }
-    document.getElementById('data-import-export-btn').addEventListener('click', showDataModal);
-    document.getElementById('close-data-modal-btn').addEventListener('click', hideDataModal);
 
     window._dataFileHandle = null;
     window._persistToFile = function() {
@@ -2064,7 +2022,7 @@
       setSheetStatus('CSV descargado. Impórtalo en Google Sheet: Archivo → Importar → Subir → Selecciona el archivo.', false);
     });
     document.getElementById('add-template-btn').addEventListener('click', () => {
-      hideTemplatesModal();
+      hideConfigModal();
       
       const confirmModal = document.createElement('div');
       confirmModal.className = 'fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center p-4';
@@ -2099,7 +2057,7 @@
       
       document.getElementById('template-cancel-btn').addEventListener('click', () => {
         confirmModal.remove();
-        showTemplatesModal();
+        showConfigModal();
       });
     });
     
@@ -2239,7 +2197,7 @@
           hideModal();
           showToast('Actualizado correctamente ✓ ', 'success');
           if (isTemplateMode) {
-            showTemplatesModal();
+            showConfigModal();
           }
         } else {
           showToast('Error al actualizar', 'error');
@@ -2319,7 +2277,7 @@
           hideModal();
           if (isTemplateMode) {
             showToast('Transacción programada creada ✓ ', 'success');
-            showTemplatesModal();
+            showConfigModal();
             
             await checkAndProcessScheduledTransactions();
           } else {
