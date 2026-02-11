@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.py[cod]
+.Python
+*.so
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+*.swp
+*.swo
+*~
