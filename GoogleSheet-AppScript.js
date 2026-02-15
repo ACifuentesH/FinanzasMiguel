@@ -1,20 +1,14 @@
 /**
- * Código para conectar tu Google Sheet con el Dashboard Miguelini.
+ * Una sola hoja de cálculo conectada al Dashboard Miguelini.
+ * Los datos se cargan al abrir el dashboard y se guardan solos en cada cambio.
  *
  * CÓMO USAR:
- * 1. Abre tu Google Sheet (o crea uno nuevo).
- * 2. Menú: Extensiones → Apps Script.
- * 3. Borra cualquier código que haya y pega TODO este archivo.
- * 4. Guarda (Ctrl+S). Nombre del proyecto: por ejemplo "Miguelini Sync".
- * 5. Despliega: Implementar → Nueva implementación → Tipo: Aplicación web.
- *    - Descripción: "Sync con dashboard"
- *    - Ejecutar como: Yo
- *    - Quién puede acceder: Cualquier persona
- * 6. Haz clic en Implementar. Copia la URL que termina en /exec.
- * 7. En el dashboard (Datos → Conectar con Google Sheet) pega esa URL.
- *
- * ENVIAR datos al Sheet: en el dashboard clic en "Enviar datos al Sheet".
- * TRAER datos del Sheet: clic en "Traer datos del Sheet".
+ * 1. Crea o abre un Google Sheet.
+ * 2. Extensiones → Apps Script. Borra el código y pega TODO este archivo. Guarda.
+ * 3. Implementar → Nueva implementación → Tipo: Aplicación web.
+ *    Ejecutar como: Yo. Quién puede acceder: Cualquier persona.
+ * 4. Implementar y copiar la URL (termina en /exec).
+ * 5. En el dashboard (Configuración → Datos) pega esa URL. Listo: misma hoja en todos los dispositivos.
  */
 
 var SHEET_NAME = 'Datos'; // nombre de la pestaña donde se escriben los datos
@@ -67,24 +61,29 @@ function doPost(e) {
 
 /**
  * Responde con el contenido del Sheet como JSON (array de transacciones).
+ * Si viene ?callback=nombre, devuelve JSONP (nombre(datos)) para evitar CORS en el dashboard.
  * La columna "Data" (L) tiene el JSON completo de cada fila.
  */
 function doGet(e) {
   try {
     var sheet = getSheet();
     var lastRow = sheet.getLastRow();
-    if (lastRow < 2) {
-      return jsonResponse([]);
-    }
-    var dataColumn = 12; // columna L = Data
-    var range = sheet.getRange(2, dataColumn, lastRow, dataColumn);
-    var values = range.getValues();
     var out = [];
-    for (var i = 0; i < values.length; i++) {
-      try {
-        var obj = JSON.parse(values[i][0]);
-        if (obj) out.push(obj);
-      } catch (err) {}
+    if (lastRow >= 2) {
+      var dataColumn = 12; // columna L = Data
+      var range = sheet.getRange(2, dataColumn, lastRow, dataColumn);
+      var values = range.getValues();
+      for (var i = 0; i < values.length; i++) {
+        try {
+          var obj = JSON.parse(values[i][0]);
+          if (obj) out.push(obj);
+        } catch (err) {}
+      }
+    }
+    var callback = (e && e.parameter && e.parameter.callback) ? String(e.parameter.callback).trim() : '';
+    if (callback && /^[a-zA-Z0-9_.]+$/.test(callback)) {
+      var jsonp = callback + '(' + JSON.stringify(out) + ')';
+      return ContentService.createTextOutput(jsonp).setMimeType(ContentService.MimeType.JAVASCRIPT);
     }
     return jsonResponse(out);
   } catch (err) {

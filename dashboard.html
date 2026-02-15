@@ -214,16 +214,11 @@
          <button type="button" id="import-data-btn" class="bg-gray-800 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-lg text-sm">Importar y recargar</button>
          <p id="file-status" class="text-sm text-gray-600"></p>
          <div class="pt-2 border-t border-gray-100">
-          <p class="text-gray-600 text-xs font-medium mb-1">Google Sheet — conectar una vez</p>
-          <p class="text-gray-500 text-xs mb-1">Pega la URL abajo y usa «Copiar enlace para usar en todos lados». Ese enlace ya lleva la conexión: ábrelo en móvil u otro PC y verás los mismos datos.</p>
-          <input type="url" id="google-sheet-url" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm mb-1" placeholder="https://script.google.com/macros/s/.../exec">
-          <p id="sync-active-msg" class="text-xs text-green-600 mb-1 hidden">✓ Conectado. Usa el mismo enlace en todos los dispositivos.</p>
-          <div class="flex flex-wrap gap-2">
-           <button type="button" id="send-to-sheet-btn" class="bg-green-700 hover:bg-green-600 text-white font-medium py-2 px-3 rounded-lg text-sm">Enviar al Sheet</button>
-           <button type="button" id="fetch-from-sheet-btn" class="bg-green-600 hover:bg-green-500 text-white font-medium py-2 px-3 rounded-lg text-sm">Traer del Sheet</button>
-           <button type="button" id="copy-mobile-link-btn" class="bg-gray-800 hover:bg-gray-700 text-white font-medium py-2 px-3 rounded-lg text-sm">Copiar enlace para usar en todos lados</button>
-          </div>
-          <p id="sheet-status" class="text-sm mt-1 hidden"></p>
+          <p class="text-gray-600 text-xs font-medium mb-1">Conexión a Google Sheet</p>
+          <p class="text-gray-500 text-xs mb-2">Una sola hoja de cálculo. Pega la URL del Web App (termina en /exec). Los datos se cargan y guardan solos en todos los dispositivos.</p>
+          <input type="url" id="google-sheet-url" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm mb-2" placeholder="https://script.google.com/macros/s/.../exec">
+          <p id="sync-active-msg" class="text-xs text-green-600 mb-2 hidden">✓ Conectado a la hoja. Mismos datos en este y en otros dispositivos.</p>
+          <button type="button" id="copy-mobile-link-btn" class="bg-gray-800 hover:bg-gray-700 text-white font-medium py-2 px-3 rounded-lg text-sm">Copiar enlace para otro dispositivo</button>
          </div>
         </div>
        </div>
@@ -1963,62 +1958,32 @@
     });
 
     var sheetUrlInput = document.getElementById('google-sheet-url');
-    var sheetStatus = document.getElementById('sheet-status');
     if (localStorage.getItem('miguelini_sheet_url')) sheetUrlInput.value = localStorage.getItem('miguelini_sheet_url');
     sheetUrlInput.addEventListener('change', function() {
       var v = (this.value || '').trim();
       localStorage.setItem('miguelini_sheet_url', v);
       window._sheetSyncUrl = v || null;
       var sb = document.getElementById('sheet-sync-badge');
+      var syncMsg = document.getElementById('sync-active-msg');
       if (sb) { if (v) { sb.classList.remove('hidden'); sb.classList.add('flex'); } else { sb.classList.add('hidden'); sb.classList.remove('flex'); } }
-    });
-    function setSheetStatus(msg, isError) {
-      sheetStatus.textContent = msg;
-      sheetStatus.classList.remove('hidden');
-      sheetStatus.style.color = isError ? '#b91c1c' : '#15803d';
-    }
-    document.getElementById('send-to-sheet-btn').addEventListener('click', function() {
-      var url = sheetUrlInput.value.trim();
-      if (!url) { setSheetStatus('Escribe la URL del Web App de Google.', true); return; }
-      localStorage.setItem('miguelini_sheet_url', url);
-      window._sheetSyncUrl = url;
-      var sb = document.getElementById('sheet-sync-badge'); if (sb) { sb.classList.remove('hidden'); sb.classList.add('flex'); }
-      var data = localStorage.getItem('miguelini_data') || '[]';
-      setSheetStatus('Enviando...', false);
-      fetch(url, { method: 'POST', body: data, headers: { 'Content-Type': 'application/json' } })
-        .then(function(r) { return r.json(); })
-        .then(function(res) {
-          if (res && res.ok) setSheetStatus('Enviado correctamente. ' + (res.count != null ? res.count + ' registros.' : ''), false);
-          else setSheetStatus(res && res.error ? res.error : 'Error en el servidor.', true);
-        })
-        .catch(function(err) {
-          setSheetStatus('Error de red o CORS. Usa «Descargar CSV» e impórtalo en el Sheet (Archivo → Importar).', true);
-        });
+      if (syncMsg) syncMsg.classList.toggle('hidden', !v);
+      if (v && window._fetchSheetJsonp) {
+        window._fetchSheetJsonp(v).then(function(arr) {
+          if (Array.isArray(arr)) {
+            localStorage.setItem('miguelini_data', JSON.stringify(arr));
+            if (window.dataSdk && window.dataSdk._store) { window.dataSdk._store = arr; if (window.dataSdk._handler && window.dataSdk._handler.onDataChanged) window.dataSdk._handler.onDataChanged(arr); }
+            showToast('Datos de la hoja cargados.', 'success');
+          }
+        }).catch(function() {});
+      }
     });
     document.getElementById('copy-mobile-link-btn').addEventListener('click', function() {
       var url = (sheetUrlInput.value || '').trim();
-      if (!url) { setSheetStatus('Pega primero la URL del Web App arriba.', true); return; }
+      if (!url) { showToast('Pega primero la URL del Web App arriba.', 'error'); return; }
       var base = window.location.origin + (window.location.pathname || '/');
       var sep = base.indexOf('?') >= 0 ? '&' : '?';
       var link = base + sep + 'sheet=' + encodeURIComponent(url);
-      navigator.clipboard.writeText(link).then(function() { showToast('Enlace copiado. Ábrelo en el móvil para ver los mismos datos.', 'success'); }).catch(function() { setSheetStatus('No se pudo copiar. Enlace: ' + link, false); });
-    });
-    document.getElementById('fetch-from-sheet-btn').addEventListener('click', function() {
-      var url = sheetUrlInput.value.trim();
-      if (!url) { setSheetStatus('Escribe la URL del Web App.', true); return; }
-      localStorage.setItem('miguelini_sheet_url', url);
-      window._sheetSyncUrl = url;
-      var sb = document.getElementById('sheet-sync-badge'); if (sb) { sb.classList.remove('hidden'); sb.classList.add('flex'); }
-      setSheetStatus('Trayendo...', false);
-      var fetchFn = window._fetchSheetJsonp || function(u) { return fetch(u).then(function(r) { return r.json(); }); };
-      fetchFn(url).then(function(arr) {
-        if (!Array.isArray(arr)) { setSheetStatus('El Sheet no devolvió un array. Revisa el script.', true); return; }
-        localStorage.setItem('miguelini_data', JSON.stringify(arr));
-        setSheetStatus('Datos cargados. Recargando...', false);
-        setTimeout(function() { location.reload(); }, 800);
-      }).catch(function(err) {
-        setSheetStatus('Error al traer. Comprueba la URL del Web App.', true);
-      });
+      navigator.clipboard.writeText(link).then(function() { showToast('Enlace copiado. Ábrelo en otro dispositivo para ver los mismos datos.', 'success'); }).catch(function() { showToast('No se pudo copiar.', 'error'); });
     });
     document.getElementById('export-csv-btn').addEventListener('click', function() {
       var raw = localStorage.getItem('miguelini_data') || '[]';
@@ -2048,7 +2013,7 @@
       a.download = 'miguelini-datos-' + new Date().toISOString().slice(0, 10) + '.csv';
       a.click();
       URL.revokeObjectURL(a.href);
-      setSheetStatus('CSV descargado. Impórtalo en Google Sheet: Archivo → Importar → Subir → Selecciona el archivo.', false);
+      showToast('CSV descargado.', 'success');
     });
     document.getElementById('add-template-btn').addEventListener('click', () => {
       hideConfigModal();
@@ -2330,18 +2295,24 @@
         return new Promise(function(resolve, reject) {
           var sep = url.indexOf('?') >= 0 ? '&' : '?';
           var cbName = '__sheetJsonpCb';
+          var done = false;
+          function finish(err, data) {
+            if (done) return;
+            done = true;
+            try { delete window[cbName]; } catch (e) {}
+            if (script.parentNode) script.parentNode.removeChild(script);
+            if (timer) clearTimeout(timer);
+            if (err) reject(err); else resolve(Array.isArray(data) ? data : (data && data.data && Array.isArray(data.data) ? data.data : []));
+          }
           var script = document.createElement('script');
-          window[cbName] = function(data) {
-            try { delete window[cbName]; } catch (e) {}
-            if (script.parentNode) script.parentNode.removeChild(script);
-            resolve(Array.isArray(data) ? data : (data && data.data && Array.isArray(data.data) ? data.data : []));
-          };
-          script.src = url + sep + 'callback=' + cbName;
+          window[cbName] = function(data) { finish(null, data); };
           script.onerror = function() {
-            try { delete window[cbName]; } catch (e) {}
-            if (script.parentNode) script.parentNode.removeChild(script);
-            reject(new Error('Error de red'));
+            finish(new Error('No se pudo cargar el Sheet. En Apps Script: Implementar como "Aplicación web" y en "Quién puede acceder" elige "Cualquier persona".'));
           };
+          var timer = setTimeout(function() {
+            finish(new Error('Tiempo de espera agotado. Revisa la URL del Web App.'));
+          }, 15000);
+          script.src = url + sep + 'callback=' + cbName;
           document.head.appendChild(script);
         });
       };
